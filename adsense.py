@@ -108,7 +108,7 @@ class Persona_Aggressive_Crawler(SequentialTaskSet):
     def news_skim(self):
         for path in NEWS_SUITE[:5]:
             self.client.get(path, headers=generate_ultra_headers(), name="Bot_News_Skim")
-            time.sleep(0.1)
+            time.sleep(random.uniform(0.5, 1.5))
     
     @task
     def deep_crawl(self):
@@ -263,7 +263,7 @@ class WebsiteUser(HttpUser):
     ULTRA-SCALE SWARM ENGINE
     This class coordinates the diverse personas and manages high-speed request generation.
     """
-    wait_time = between(0.1, 0.3)
+    wait_time = between(1, 4)
     
     tasks = {
         Persona_Aggressive_Crawler: 40,
