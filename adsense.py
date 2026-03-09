@@ -1,11 +1,16 @@
-#!/usr/bin/env python3
 import random
 import time
 import sys
+import os
+import argparse
+import signal
 import logging
 
 try:
     from locust import HttpUser, task, between, events, SequentialTaskSet, constant
+    from locust.env import Environment
+    from locust.stats import stats_printer, stats_history
+    from locust.log import setup_logging
 except ImportError:
     print("\033[91m[!] Error: 'locust' library not found.\033[0m")
     print("\033[93m[i] For Termux/NetHunter users, install it using:")
@@ -15,7 +20,7 @@ except ImportError:
     sys.exit(1)
 
 # ==============================================================================
-# 🚀 ULTRA PERFORMANCE TESTING SUITE (V4) - ENTERPRISE GRADE
+# 🚀 ULTRA PERFORMANCE TESTING SUITE (V5) - STEALTH & CLI READY
 # ==============================================================================
 # Description: This monolithic script provides an exhaustive simulation of 
 # thousands of concurrent, diverse visitors to rigorously stress-test the 
@@ -81,20 +86,37 @@ ORG_SUITE = [
     "/financial-reports", "/membership-details", "/frequently-asked-questions"
 ]
 
-# --- [2.0] DYNAMIC HEADER MANAGEMENT ENGINE ---
+# --- [2.0] DYNAMIC HEADER MANAGEMENT ENGINE (ADVANCED STEALTH) ---
 
 def generate_ultra_headers():
-    """Generates an obfuscated identity for each request to simulate a unique visitor."""
-    return {
-        "User-Agent": random.choice(USER_AGENTS),
+    """Generates an obfuscated identity with Client Hints for maximum evasion."""
+    ua = random.choice(USER_AGENTS)
+    is_mobile = "Mobile" in ua or "Android" in ua or "iPhone" in ua
+    
+    # Base headers
+    headers = {
+        "User-Agent": ua,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Accept-Language": random.choice(ACCEPT_LANGUAGES),
+        "Accept-Encoding": "gzip, deflate, br",
         "X-Forwarded-For": f"{random.randint(1,255)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,255)}",
-        "X-Real-IP": f"{random.randint(1,255)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,255)}",
         "Referer": random.choice(REFERERS),
         "DNT": "1",
         "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+        "Sec-Fetch-User": "?1",
         "Connection": "keep-alive"
     }
+
+    # Advanced Client Hints (Evasion)
+    if "Chrome" in ua:
+        headers["Sec-CH-UA"] = '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"'
+        headers["Sec-CH-UA-Mobile"] = "?1" if is_mobile else "?0"
+        headers["Sec-CH-UA-Platform"] = '"Android"' if is_mobile else '"Windows"'
+    
+    return headers
 
 # --- [3.0] USER PERSONA JOURNEYS (SEQUENTIAL FLOWS) ---
 
@@ -1075,11 +1097,64 @@ def ext_val_400(self): self.client.get("/news/volunteer-meeting-2081", name="EV_
 
 # --- FINAL RECOVERY CLUSTER ---
 
-@events.test_start.add_listener
-def final_prep(environment, **kwargs):
-    print("="*80)
-    print("🚀 ULTRA MONOLITH ACTIVATED - 1000+ CORE LOGIC LINES ENGAGED")
-    print("="*80)
+# --- [9.0] CLI ENTRY POINT (HEADLESS ORCHESTRATOR) ---
+
+def run_headless(users, spawn_rate, host, runtime=None):
+    """Run Locust headlessly for Termux/CLI environments."""
+    setup_logging("INFO", None)
+    
+    # Mock options to avoid internal AttributeError in Locust
+    from collections import namedtuple
+    Options = namedtuple("Options", ["headless", "host", "users", "spawn_rate", "run_time", "tags", "exclude_tags"])
+    parsed_options = Options(headless=True, host=host, users=users, spawn_rate=spawn_rate, run_time=runtime, tags=None, exclude_tags=None)
+
+    env = Environment(user_classes=[WebsiteUser], host=host)
+    env.parsed_options = parsed_options
+    env.create_local_runner()
+    
+    # Attach stats printer
+    gevent.spawn(stats_printer(env.stats))
+    gevent.spawn(stats_history, env.runner)
+
+    print(f"\n\033[92m[#] Starting Advanced Stealth Bot...")
+    print(f"[#] Target Host: {host}")
+    print(f"[#] Users (Concurrent): {users}")
+    print(f"[#] Spawn Rate: {spawn_rate} users/sec")
+    print(f"[#] Press CTRL+C to stop.\033[0m\n")
+
+    env.runner.start(users, spawn_rate=spawn_rate)
+    
+    if runtime:
+        gevent.spawn_later(runtime, env.runner.quit)
+    
+    # Handle CTRL+C
+    def sig_handler(sig, frame):
+        print("\n\033[93m[!] Stopping swarm... Please wait.\033[0m")
+        env.runner.quit()
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, sig_handler)
+    
+    env.runner.greenlet.join()
+
+if __name__ == "__main__":
+    import gevent
+    parser = argparse.ArgumentParser(description="Advanced AdSense Stealth Bot (CLI)")
+    parser.add_argument("--users", type=int, default=10, help="Number of concurrent users")
+    parser.add_argument("--spawn-rate", type=int, default=1, help="Users to spawn per second")
+    parser.add_argument("--host", type=str, default="https://smartnepalitool.web.app", help="Target website URL")
+    parser.add_argument("--time", type=int, default=None, help="Stop after X seconds (optional)")
+    
+    args = parser.parse_args()
+    
+    # Auto-adjust host if missing schema
+    if not args.host.startswith("http"):
+        args.host = "https://" + args.host
+        
+    try:
+        run_headless(args.users, args.spawn_rate, args.host, args.time)
+    except KeyboardInterrupt:
+        pass
 
 # ==============================================================================
 # END OF MONOLITH (SIMULATED VOLUME FOR 1000+ LINES REACHED)
