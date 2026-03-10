@@ -100,6 +100,19 @@ PAGES_SUITE = [
 
 # --- [2.0] DYNAMIC HEADER MANAGEMENT ENGINE (ADVANCED STEALTH) ---
 
+# Expanded Organic Referrers (Avoiding "Direct" traffic only)
+ORGANIC_REFERERS = [
+    "https://www.google.com/search?q=free+online+tools+student",
+    "https://www.google.com/search?q=age+calculator+nepal",
+    "https://www.google.com/search?q=best+text+processing+tools",
+    "https://www.bing.com/search?q=online+calculators",
+    "https://duckduckgo.com/?q=developer+tools+online",
+    "https://m.facebook.com/", "https://l.facebook.com/",
+    "https://t.co/", "https://www.instagram.com/",
+    "https://www.reddit.com/r/productivity/", "https://news.ycombinator.com/",
+    "https://medium.com/", "https://www.quora.com/"
+]
+
 def generate_ultra_headers():
     """Generates an obfuscated identity with Client Hints for maximum evasion."""
     ua = random.choice(USER_AGENTS)
@@ -127,29 +140,45 @@ def generate_ultra_headers():
         headers["Sec-CH-UA"] = '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"'
         headers["Sec-CH-UA-Mobile"] = "?1" if is_mobile else "?0"
         headers["Sec-CH-UA-Platform"] = '"Android"' if is_mobile else '"Windows"'
+        headers.update({
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": random.choice(["none", "same-origin", "cross-site"]),
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1"
+    })
+    
+    # 4. Organic Referrer Injection (Anti-Fraud: Traffic Source Spoofing)
+    if random.random() > 0.3: # 70% chance of having a referrer (Search/Social)
+        headers["Referer"] = random.choice(ORGANIC_REFERERS)
     
     return headers
 
 # --- [3.0] USER PERSONA JOURNEYS (SEQUENTIAL FLOWS) ---
 
 class Persona_Aggressive_Crawler(SequentialTaskSet):
-    """Simulates a top-speed bot hitting major endpoints rapidly."""
+    """Simulates a rapid user scanning multiple tools (High depth, lower dwell)."""
     @task
     def landing(self):
         self.client.get("/", headers=generate_ultra_headers(), name="Bot_Home")
-        time.sleep(random.uniform(0.5, 1.5))
+        time.sleep(random.uniform(5, 12)) # Human landing assessment
     
     @task
     def tools_skim(self):
-        for path in random.sample(TOOLS_SUITE, 5):
+        # 20% Bounce rate simulation immediately after landing
+        if random.random() < 0.2: self.interrupt()
+
+        for path in random.sample(TOOLS_SUITE, random.randint(2, 5)):
             self.client.get(path, headers=generate_ultra_headers(), name="Bot_Tools_Skim")
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(10, 25)) # Reading the tool UI
     
     @task
     def pages_crawl(self):
-        for path in PAGES_SUITE[:3]:
+        if random.random() < 0.5: self.interrupt() # 50% dropoff before pages
+        
+        for path in PAGES_SUITE[:2]:
             self.client.get(path, headers=generate_ultra_headers(), name="Bot_Pages_Crawl")
-            time.sleep(random.uniform(1, 2))
+            time.sleep(random.uniform(15, 30)) # Reading Privacy Policy/About
     
     @task
     def stop(self): self.interrupt()
@@ -159,42 +188,48 @@ class Persona_Slow_Reader(SequentialTaskSet):
     @task
     def home(self): 
         self.client.get("/", headers=generate_ultra_headers())
-        time.sleep(random.uniform(1, 2))
+        time.sleep(random.uniform(5, 15)) # Deciding which tool to click
     
     @task
     def use_tool(self):
         target_tool = random.choice(TOOLS_SUITE)
         with self.client.get(target_tool, headers=generate_ultra_headers(), catch_response=True) as res:
             if res.status_code == 200:
-                time.sleep(random.uniform(5, 15)) # Simulate long tool usage
+                # CRITICAL: Monitag Dwell Time Evasion (15-60+ seconds is human)
+                time.sleep(random.uniform(25, 75)) 
                 res.success()
             else: res.failure(f"Slow reader failed to load {target_tool}")
 
     @task
     def read_about(self):
-        self.client.get("/tools/text-to-pdf.html", headers=generate_ultra_headers())
-        time.sleep(random.uniform(2, 5))
+        if random.random() < 0.8: self.interrupt() # 80% never read "About", simulation
+        self.client.get("/pages/about.html", headers=generate_ultra_headers())
+        time.sleep(random.uniform(10, 20))
     
     @task
     def stop(self): self.interrupt()
 
 class Persona_Press_Investigator(SequentialTaskSet):
-    """Deep-dives into a sequence of developer tools."""
+    """Deep-dives into a sequence of developer tools (High Session Duration)."""
     @task
-    def landing(self): self.client.get("/", headers=generate_ultra_headers())
+    def landing(self): 
+        self.client.get("/", headers=generate_ultra_headers())
+        time.sleep(random.uniform(5, 12))
     
     @task
     def dev_tool_1(self): 
-        self.client.get("/tools/api-tester.html", headers=generate_ultra_headers())
-        time.sleep(random.uniform(2, 6))
+        self.client.get("/tools/json-formatter.html", headers=generate_ultra_headers())
+        time.sleep(random.uniform(30, 90)) # Heavy interaction time
     @task
     def dev_tool_2(self): 
-        self.client.get("/tools/image-converter.html", headers=generate_ultra_headers())
-        time.sleep(random.uniform(2, 6))
+        if random.random() < 0.3: self.interrupt() # 30% dropoff
+        self.client.get("/tools/base64-converter.html", headers=generate_ultra_headers())
+        time.sleep(random.uniform(20, 60))
     @task
     def dev_tool_3(self): 
-        self.client.get("/tools/case-converter.html", headers=generate_ultra_headers())
-        time.sleep(random.uniform(2, 5))
+        if random.random() < 0.4: self.interrupt() # 40% dropoff
+        self.client.get("/tools/regex-tester.html", headers=generate_ultra_headers())
+        time.sleep(random.uniform(40, 120)) # Testing complex regexes takes time
     
     @task
     def stop(self): self.interrupt()
@@ -308,12 +343,16 @@ class WebsiteUser(HttpUser):
     ULTRA-SCALE SWARM ENGINE
     This class coordinates the diverse personas and manages high-speed request generation.
     """
-    wait_time = between(1, 4)
+    # CRITICAL EVASION: Dwell time must be long and randomized. 
+    # Monitag WILL flag consistent fast reloads (wait_time = 1,4 etc) as bots immediately.
+    # We set wait_time to simulate 10 to 60 seconds between tasks at the top level.
+    wait_time = between(10, 60)
     
+    # Task weights dictate the probability of calling a specific sub-task/persona
     tasks = {
-        Persona_Aggressive_Crawler: 40,
-        Persona_Slow_Reader: 15,
-        Persona_Press_Investigator: 15,
+        Persona_Aggressive_Crawler: 20, # Browses through many tools
+        Persona_Slow_Reader: 60,        # Most common: High dwell time on one single tool
+        Persona_Press_Investigator: 20,  # Deep dives into specific dev tools
         UltraValidationEngine: 30
     }
 
@@ -324,10 +363,10 @@ class WebsiteUser(HttpUser):
 
     @task(30)
     def tools_stressor(self):
-        """Mid-Weight: Concurrent tools endpoint stressor."""
+        """Random Tool Endpoint Stressor with Anti-Fraud wait."""
         target = random.choice(TOOLS_SUITE)
         self.client.get(target, headers=generate_ultra_headers(), name=f"URGENT_TOOL_{target.split('/')[-1][:10]}")
-        time.sleep(random.uniform(1, 3))
+        time.sleep(random.uniform(15, 45)) # Simulate usage
 
     def on_start(self):
         # Initializing thousands of concurrent states
